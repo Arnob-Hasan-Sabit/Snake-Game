@@ -142,6 +142,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+
     bool running = true;
     while (running) {
         srand(time(NULL));
