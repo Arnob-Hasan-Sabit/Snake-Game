@@ -33,6 +33,7 @@ SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file) {
     return texture;
 }
 
+
 void render_text(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Color color, int x, int y) {
     SDL_Surface *surface = TTF_RenderText_Solid(font, text, color);
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
