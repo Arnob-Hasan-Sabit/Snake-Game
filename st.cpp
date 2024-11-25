@@ -12,22 +12,12 @@
 #define SCREEN_HEIGHT 480
 #define TILE_SIZE 20
 
-typedef struct { 
-    int x, y; 
-} Point;
-
-typedef struct { 
-    Point body[SCREEN_WIDTH * SCREEN_HEIGHT / (TILE_SIZE * TILE_SIZE)]; 
-    int length; 
-    Point direction; 
-} Snake;
+typedef struct { int x, y; } Point;
+typedef struct { Point body[SCREEN_WIDTH * SCREEN_HEIGHT / (TILE_SIZE * TILE_SIZE)]; int length; Point direction; } Snake;
 
 SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file) {
     SDL_Surface *surface = IMG_Load(file);
-    if (!surface) { 
-        printf("IMG_Load Error: %s\n", IMG_GetError()); 
-        return NULL; 
-    }
+    if (!surface) { printf("IMG_Load Error: %s\n", IMG_GetError()); return NULL; }
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
     return texture;
@@ -66,9 +56,11 @@ bool show_menu(SDL_Renderer *renderer, TTF_Font *font, SDL_Texture *menuBackgrou
         }
 
         SDL_RenderCopy(renderer, menuBackground, NULL, NULL);
+
         render_text(renderer, font, "Snake Game", (SDL_Color){255, 255, 255, 255}, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 4);
         render_text(renderer, font, "Press 'Enter' to Start", (SDL_Color){255, 255, 255, 255}, SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 - 20);
         render_text(renderer, font, "Press 'esc' to Exit", (SDL_Color){255, 255, 255, 255}, SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 + 20);
+
         SDL_RenderPresent(renderer);
     }
 
@@ -99,12 +91,14 @@ bool show_game_over(SDL_Renderer *renderer, TTF_Font *font, SDL_Texture *backgro
         }
 
         SDL_RenderCopy(renderer, background, NULL, NULL);
+
         render_text(renderer, font, "Game Over", (SDL_Color){255, 0, 0, 255}, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 4);
         char scoreText[64];
         sprintf(scoreText, "Your Score: %d", score);
         render_text(renderer, font, scoreText, (SDL_Color){255, 255, 255, 255}, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 20);
         render_text(renderer, font, "Press 'R' to Replay", (SDL_Color){255, 255, 255, 255}, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 20);
-        render_text(renderer, font, "Press 'esc' to Exit", (SDL_Color){255, 255, 255, 255}, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 60);
+        render_text(renderer, font, "Press esc to Exit", (SDL_Color){255, 255, 255, 255}, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 60);
+
         SDL_RenderPresent(renderer);
     }
 
@@ -123,22 +117,13 @@ int main(int argc, char *argv[]) {
     SDL_Texture *snakeTexture = load_texture(renderer, "snake.png");
     SDL_Texture *backgroundTexture = load_texture(renderer, "bg.png");
     SDL_Texture *menuBackgroundTexture = load_texture(renderer, "frontpage.png");
-    SDL_Texture *poisonousFoodTexture = load_texture(renderer, "Sfood.png");
-    if (!font || !eatSound || !foodTexture || !snakeTexture || !backgroundTexture || !menuBackgroundTexture || !poisonousFoodTexture) return 1;
+    if (!font || !eatSound || !foodTexture || !snakeTexture || !backgroundTexture || !menuBackgroundTexture) return 1;
 
     if (!show_menu(renderer, font, menuBackgroundTexture)) {
-   SDL_DestroyTexture(menuBackgroundTexture);
-        SDL_DestroyTexture(backgroundTexture);
-        SDL_DestroyTexture(foodTexture);
-        SDL_DestroyTexture(poisonousFoodTexture);
-        SDL_DestroyTexture(snakeTexture);
-        Mix_FreeChunk(eatSound);
-        TTF_CloseFont(font);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        Mix_CloseAudio();
-        TTF_Quit();
-        SDL_Quit();
+        SDL_DestroyTexture(menuBackgroundTexture); SDL_DestroyTexture(backgroundTexture);
+        SDL_DestroyTexture(foodTexture); SDL_DestroyTexture(snakeTexture);
+        Mix_FreeChunk(eatSound); TTF_CloseFont(font);
+        SDL_DestroyRenderer(renderer); SDL_DestroyWindow(window); Mix_CloseAudio(); TTF_Quit(); SDL_Quit();
         return 0;
     }
 
@@ -148,9 +133,6 @@ int main(int argc, char *argv[]) {
         Snake snake = {{0}, 5, {1, 0}};
         for (int i = 0; i < snake.length; ++i) snake.body[i] = (Point){snake.length - i - 1, 0};
         Point food = {rand() % (SCREEN_WIDTH / TILE_SIZE), rand() % (SCREEN_HEIGHT / TILE_SIZE)};
-        Point poisonousFood = {-1, -1};
-        bool poisonousFoodVisible = false;
-        Uint32 poisonousFoodSpawnTime = 0;
         int score = 0;
 
         bool gameActive = true;
@@ -173,37 +155,14 @@ int main(int argc, char *argv[]) {
             }
 
             for (int i = snake.length - 1; i > 0; --i) snake.body[i] = snake.body[i - 1];
-            snake.body[0].x += snake.direction.x; 
-            snake.body[0].y += snake.direction.y;
+            snake.body[0].x += snake.direction.x; snake.body[0].y += snake.direction.y;
 
-            if (snake.body[0].x < 0 || snake.body[0].x >= SCREEN_WIDTH / TILE_SIZE || snake.body[0].y < 0 || snake.body[0].y >= SCREEN_HEIGHT / TILE_SIZE) 
-                gameActive = false;
-
-            for (int i = 1; i < snake.length; ++i) 
-                if (snake.body[0].x == snake.body[i].x && snake.body[0].y == snake.body[i].y) 
-                    gameActive = false;
+            if (snake.body[0].x < 0 || snake.body[0].x >= SCREEN_WIDTH / TILE_SIZE || snake.body[0].y < 0 || snake.body[0].y >= SCREEN_HEIGHT / TILE_SIZE) gameActive = false;
+            for (int i = 1; i < snake.length; ++i) if (snake.body[0].x == snake.body[i].x && snake.body[0].y == snake.body[i].y) gameActive = false;
 
             if (snake.body[0].x == food.x && snake.body[0].y == food.y) {
                 snake.length++; score++; food = (Point){rand() % (SCREEN_WIDTH / TILE_SIZE), rand() % (SCREEN_HEIGHT / TILE_SIZE)};
                 Mix_PlayChannel(-1, eatSound, 0);
-
-// the poisonous food part starts here 
-
-                if (score % 4 == 0) {
-                    poisonousFood = (Point){rand() % (SCREEN_WIDTH / TILE_SIZE), rand() % (SCREEN_HEIGHT / TILE_SIZE)};
-                    poisonousFoodVisible = true;
-                    poisonousFoodSpawnTime = SDL_GetTicks();
-                }
-            }
-
-            if (poisonousFoodVisible && snake.body[0].x == poisonousFood.x && snake.body[0].y == poisonousFood.y) {
-                score -= 10;
-                poisonousFoodVisible = false;
-                if (score < 0) gameActive = false;
-            }
-
-            if (poisonousFoodVisible && SDL_GetTicks() - poisonousFoodSpawnTime > 4000) {
-                poisonousFoodVisible = false;
             }
 
             SDL_RenderClear(renderer);
@@ -211,13 +170,6 @@ int main(int argc, char *argv[]) {
 
             SDL_Rect foodRect = {food.x * TILE_SIZE, food.y * TILE_SIZE, TILE_SIZE, TILE_SIZE};
             SDL_RenderCopy(renderer, foodTexture, NULL, &foodRect);
-
-            if (poisonousFoodVisible) {
-                SDL_Rect poisonousRect = {poisonousFood.x * TILE_SIZE, poisonousFood.y * TILE_SIZE, TILE_SIZE, TILE_SIZE};
-                SDL_RenderCopy(renderer, poisonousFoodTexture, NULL, &poisonousRect);
-            }
-
-// the poisonous foods part ends here 
 
             for (int i = 0; i < snake.length; ++i) {
                 SDL_Rect snakeRect = {snake.body[i].x * TILE_SIZE, snake.body[i].y * TILE_SIZE, TILE_SIZE, TILE_SIZE};
@@ -236,11 +188,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    SDL_DestroyTexture(menuBackgroundTexture);
-    SDL_DestroyTexture(backgroundTexture);
+    SDL_DestroyTexture(menuBackgroundTexture); 
+    SDL_DestroyTexture(backgroundTexture); 
     SDL_DestroyTexture(foodTexture); 
     SDL_DestroyTexture(snakeTexture);
-    SDL_DestroyTexture(poisonousFoodTexture);
     Mix_FreeChunk(eatSound); 
     TTF_CloseFont(font);
     SDL_DestroyRenderer(renderer); 
